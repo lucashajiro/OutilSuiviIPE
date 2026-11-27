@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "IPE Builder – Smart Impulse",
+  "version": "0.9.0",
+  "description": "Construction et suivi d'Indicateurs de Performance Énergétique (régression, SER, suivi réel vs attendu).",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "Ouvrir IPE Builder",
+    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+}

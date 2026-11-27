@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>IPE Builder</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="topbar">
+  <header class="banner">
+    <div class="brand"><img src="icons/icon48.png" alt=""><span>IPE Builder</span></div>
+    <div class="site-title"><svg viewBox="0 0 24 24"><path d="M4 21V5l8-2v18M12 21V9l8 2v10M3 21h18M7 8h2M7 12h2M7 16h2M15 13h2M15 17h2"/></svg><span id="dataset-label">Aucune donnée chargée</span></div>
+    <label class="unit-pick">Unité <select id="unit"></select></label>
+  </header>
+  </div>
+
+  <div class="layout">
+  <aside class="sidebar">
+    <div class="side-label">Indicateurs de performance</div>
+    <nav id="tabs">
+      <button data-tab="donnees" class="active"><svg viewBox="0 0 24 24"><path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zm0 0v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Données</span></button>
+      <button data-tab="correlations"><svg viewBox="0 0 24 24"><path d="M4 20h16M4 20V4"/><circle cx="8" cy="15" r="1.3"/><circle cx="11" cy="12" r="1.3"/><circle cx="14" cy="10" r="1.3"/><circle cx="18" cy="6" r="1.3"/><path d="M6 17L19 5"/></svg><span>Corrélations</span></button>
+      <button data-tab="modele"><svg viewBox="0 0 24 24"><path d="M4 20V4m0 16h16"/><path d="M6 16c3-1 4-6 7-7s4 0 6-4"/><path d="M15 15h5m-2.5-2.5v5"/></svg><span>Modèle &amp; SER</span></button>
+      <button data-tab="suivi"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="5" y="10" width="3" height="8"/><rect x="10.5" y="7" width="3" height="11"/><rect x="16" y="12" width="3" height="6"/><path d="M5 6l5 2 4-3 5 2"/></svg><span>Suivi</span></button>
+    </nav>
+    <div id="app-version" class="app-version"></div>
+  </aside>
+
+  <main>
+    <!-- ================= 1. DONNÉES ================= -->
+    <section id="tab-donnees" class="tab active">
+      <div class="page-head"><h1>Données</h1><p class="crumb">Consommations par usage, facteurs d'influence et informations du site</p></div>
+      <div class="grid2">
+        <div class="card">
+          <h2>Charger des données</h2>
+          <p class="muted">Première colonne : date de début de période (AAAA-MM-JJ, JJ/MM/AAAA ou MM/AAAA). Colonnes suivantes : consommations par usage et facteurs (DJU…). Séparateur ; ou , et décimales avec virgule acceptés.</p>
+          <div class="row">
+            <button id="btn-sample" class="secondary">Charger l'exemple</button>
+            <label class="button secondary">Importer un CSV<input type="file" id="file-csv" accept=".csv,.txt" hidden></label>
+          </div>
+          <details>
+            <summary>… ou coller un tableau (depuis Excel)</summary>
+            <textarea id="paste-area" rows="6" placeholder="Date;Général (kWh);DJU chauffage&#10;01/2024;45210;380"></textarea>
+            <button id="btn-paste">Importer le texte collé</button>
+          </details>
+          <div class="row">
+            <label>Nom du site <input id="ds-name" type="text"></label>
+            <label>Pas de temps
+              <select id="ds-gran">
+                <option value="mois">Mois</option>
+                <option value="semaine">Semaine</option>
+                <option value="jour">Jour</option>
+              </select>
+            </label>
+          </div>
+          <p id="import-msg" class="msg"></p>
+        </div>
+        <div class="card">
+          <h2>Informations du site</h2>
+          <p id="site-address" class="muted"></p>
+          <div class="row">
+            <label>Pays <select id="site-country"></select></label>
+            <label class="check"><input type="checkbox" id="site-holidays"> Jours fériés du pays = jours fermés</label>
+          </div>
+          <div class="row">
+            <label>Surface <input id="site-surface" type="number" min="0" step="1" class="num"> m²</label>
+            <label>Coût <input id="site-cost" type="number" min="0" step="0.001" class="num"> €/kWh</label>
+            <label>Intensité carbone <input id="site-co2" type="number" min="0" step="1" class="num"> gCO₂e/kWh</label>
+          </div>
+          <p id="site-kpi-note" class="muted small"></p>
+          <h3>Horaires d'ouverture</h3>
+          <table id="site-schedule" class="compact schedule"></table>
+          <p class="muted small">Jours ouvrés = jours ouverts selon ces horaires, hors jours fériés (si la case est cochée). Jours non ouvrés = les autres jours de la période. Heures d'ouverture = somme des plages horaires des jours ouvrés. Jours calendaires = nombre total de jours de la période (28 à 31 pour un mois, 7 pour une semaine).</p>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h2>Colonnes</h2>
+          <p class="muted">Indique le rôle de chaque colonne. Les jours ouvrés / non ouvrés sont calculés automatiquement à partir des dates.</p>
+          <table id="col-table" class="compact"></table>
+        </div>
+        <div class="card">
+          <h2>Combiner des consommations</h2>
+          <p class="muted">Crée une nouvelle consommation égale à la somme de plusieurs usages (ex. chauffage + ventilation = CVC). Elle se comporte ensuite comme les autres et se recalcule à chaque import.</p>
+          <div id="combo-parts" class="checks combo-parts"></div>
+          <div class="row">
+            <input id="combo-name" type="text" placeholder="Nom (ex. CVC total)">
+            <input id="combo-color" type="color" value="#00b4b7" title="Couleur">
+            <button id="btn-combo">Créer la consommation combinée</button>
+          </div>
+          <p id="combo-msg" class="msg"></p>
+          <table id="combo-list" class="compact"></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row space"><h2>Aperçu</h2>
+          <label>Séries <select id="overview-series" multiple size="1"></select></label></div>
+        <div class="chart-box"><canvas id="chart-overview"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Tableau de données</h2>
+        <div class="table-wrap"><table id="data-table"></table></div>
+      </div>
+    </section>
+
+    <!-- ================= 2. CORRÉLATIONS ================= -->
+    <section id="tab-correlations" class="tab">
+      <div class="page-head"><h1>Corrélations</h1><p class="crumb">Relation entre chaque consommation et ses facteurs d'influence</p></div>
+      <div class="card">
+        <h2>Matrice de corrélation (R² de Pearson) sur la période choisie</h2>
+        <p class="muted">Clique sur une case pour afficher le nuage de points correspondant. Turquoise foncé = forte relation linéaire.</p>
+        <div class="table-wrap"><table id="corr-matrix" class="matrix"></table></div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <label>Consommation (Y) <select id="scatter-y"></select></label>
+          <label>Variable (X) <select id="scatter-x"></select></label>
+          <label>Forme
+            <select id="corr-form">
+              <option value="lin">Linéaire : a + b·X</option>
+              <option value="seuil">Seuil : a + b·max(0, X − s)</option>
+              <option value="carre">Quadratique : a + b·X + c·X²</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" id="corr-nonzero"> Ignorer les périodes où X = 0</label>
+          <button id="btn-to-model">Utiliser dans Modèle &amp; SER →</button>
+        </div>
+        <div class="period-bar">
+          <div class="row">
+            <label>Période du <select id="corr-from"></select></label>
+            <label>au <select id="corr-to"></select></label>
+            <label>Fenêtre <input id="corr-len" type="number" min="3" step="1" class="num"> périodes</label>
+            <div id="corr-picks" class="picks"></div>
+          </div>
+          <span class="muted small">Fais glisser la zone bleutée du graphique de droite pour déplacer la période ; tire ses bords pour la redimensionner.</span>
+        </div>
+        <div class="row filter-bar">
+          <label>Écart max. à la droite <input id="rmse-k" type="number" min="10" step="10" value="200" class="num"> % de la RMSE</label>
+          <button id="btn-rmse" class="secondary">Exclure les points au-delà</button>
+          <button id="btn-reset-excl" class="secondary">Réinclure tous les points</button>
+        </div>
+        <p id="scatter-info" class="big"></p>
+        <p class="muted small">Clique sur un point (ou une barre) pour l'exclure ou le réinclure. Les exclusions sont propres à chaque consommation et reprises dans l'onglet « Modèle &amp; SER ». Les pointillés montrent l'écart max. choisi. La variable X est tracée sur l'axe de droite du graphique temporel.</p>
+        <div class="grid-scatter">
+          <div class="chart-box"><canvas id="chart-scatter"></canvas></div>
+          <div class="chart-box"><canvas id="chart-bars"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. MODÈLE & SER ================= -->
+    <section id="tab-modele" class="tab">
+      <div class="page-head"><h1>Modèle &amp; SER</h1><p class="crumb">Situation énergétique de référence et équation de l'IPE</p></div>
+      <div class="grid2">
+        <div class="card">
+          <h2>Situation Énergétique de Référence</h2>
+          <div class="period-bar">
+            <div class="row">
+              <label>Référence du <select id="ref-from"></select></label>
+              <label>au <select id="ref-to"></select></label>
+              <label>Fenêtre <input id="ref-len" type="number" min="3" step="1" class="num"> périodes</label>
+            </div>
+            <div id="ref-picks" class="picks"></div>
+          </div>
+          <div class="row">
+            <label>Consommation à modéliser <select id="model-y"></select></label>
+            <label class="check"><input type="checkbox" id="model-intercept" checked> Inclure une constante (talon)</label>
+          </div>
+          <h3>Facteurs d'influence</h3>
+          <div id="model-factors"></div>
+          <details class="nl-box">
+            <summary>Facteurs non linéaires (seuil, carré)</summary>
+            <p class="muted small">Seuil : max(0, X − s), modèle à point de changement (talon puis pente au-delà du seuil s, ex. pompes à chaleur). Le seuil est recherché automatiquement et compte comme un paramètre estimé. Carré : X², ajouté avec X pour une courbe (ex. rendement qui baisse par grand froid), à utiliser avec prudence hors de la plage de référence.</p>
+            <div class="row">
+              <label>Facteur <select id="nl-base"></select></label>
+              <select id="nl-kind">
+                <option value="seuil">Seuil : max(0, X − s)</option>
+                <option value="carre">Carré : X²</option>
+              </select>
+              <button id="btn-nl-add" class="secondary">Ajouter</button>
+            </div>
+            <table id="nl-list" class="compact"></table>
+          </details>
+          <div class="row">
+            <label>Ignorer les périodes où <select id="model-nonzero"></select> = 0</label>
+          </div>
+          <div class="row">
+            <button id="btn-fit">Calculer le modèle</button>
+            <button id="btn-best" class="secondary">Tester toutes les combinaisons</button>
+          </div>
+          <label class="check small"><input type="checkbox" id="best-reopt"> Réoptimiser les seuils dans chaque combinaison</label>
+        </div>
+        <div class="card">
+          <h2>Résultat</h2>
+          <p id="model-eq" class="equation muted">Choisis une consommation et des facteurs, puis « Calculer ».</p>
+          <div id="model-kpis" class="kpis"></div>
+          <table id="model-coefs"></table>
+          <div id="model-save" class="row hidden">
+            <input id="model-name" type="text" placeholder="Nom de l'IPE">
+            <button id="btn-save">Enregistrer cet IPE</button>
+          </div>
+          <p id="model-msg" class="msg"></p>
+        </div>
+      </div>
+      <div class="card hidden" id="best-card">
+        <h2>Comparaison des combinaisons de facteurs</h2>
+        <p class="muted">Classées par R² ajusté (qui pénalise les facteurs inutiles). La dernière colonne donne le t de Student de chaque facteur. Clique sur une ligne pour l'appliquer.</p>
+        <table id="best-table"></table>
+      </div>
+      <div class="card">
+        <div class="row space"><h2>Période de référence et points exclus</h2>
+          <label>Axe secondaire <select id="fit-y2"></select></label></div>
+        <p class="muted small">Toute la consommation choisie. Zone bleutée = période de référence : fais-la glisser ou tire ses bords. Barres grises = périodes exclues pour cette consommation (clic pour exclure / réinclure, mêmes exclusions que dans Corrélations). Le modèle se recalcule automatiquement.</p>
+        <div class="chart-box short"><canvas id="chart-ref-bars"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Réel vs modélisé sur la période de référence</h2>
+        <div class="chart-box"><canvas id="chart-fit"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Décomposition : talon et part liée aux facteurs</h2>
+        <p class="muted small">Chaque barre empile la contribution de chaque terme du modèle sur la période : la constante (talon présent toute l'année, ex. ventilation) et chaque facteur (ex. DJU chauffage = part chauffage, DJU climatisation = part froid). La courbe est la consommation réelle.</p>
+        <div class="chart-box"><canvas id="chart-decomp"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ================= 4. SUIVI ================= -->
+    <section id="tab-suivi" class="tab">
+      <div class="page-head"><h1>Suivi</h1><p class="crumb">Consommation réelle comparée à la consommation attendue</p></div>
+      <div class="grid2">
+        <div class="card">
+          <h2>IPE enregistrés</h2>
+          <table id="models-list"></table>
+          <div class="row">
+            <button id="btn-export-models" class="secondary">Exporter les IPE (JSON)</button>
+            <label class="button secondary">Importer des IPE<input type="file" id="file-models" accept=".json" hidden></label>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Période de suivi</h2>
+          <div class="period-bar">
+            <div class="row">
+              <label>Du <select id="suivi-from"></select></label>
+              <label>au <select id="suivi-to"></select></label>
+              <label>Fenêtre <input id="suivi-len" type="number" min="1" step="1" class="num"> périodes</label>
+            </div>
+            <div id="suivi-picks" class="picks"></div>
+          </div>
+          <div id="suivi-kpis" class="kpis"></div>
+          <p id="suivi-msg" class="msg"></p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Consommation réelle vs attendue</h2>
+        <p class="muted small">Tout l'historique. Barres turquoise = période de référence de l'IPE ; barres vertes = période de suivi (fais glisser la zone verte ou tire ses bords, avant ou après la référence). La courbe est l'écart cumulé réel − attendu sur la période de suivi.</p>
+        <div class="chart-box"><canvas id="chart-suivi"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Écart par période</h2>
+        <p class="muted small">Barres : écart réel − attendu sur la période de suivi, vert = économie, orange = surconsommation. Suivi après la référence : économie si l'écart est négatif. Suivi avant la référence (post → ante) : économie si l'écart est positif. Courbe : même écart en % de l'attendu.</p>
+        <div class="chart-box"><canvas id="chart-suivi-delta"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="row space"><h2>Détail par période</h2><button id="btn-export-suivi" class="secondary">Exporter CSV</button></div>
+        <div class="table-wrap"><table id="suivi-table"></table></div>
+      </div>
+    </section>
+  </main>
+
+  </div>
+  <script src="lib/chart.umd.js"></script>
+  <script src="lib/holidays.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/sample.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
