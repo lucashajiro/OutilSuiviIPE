@@ -5,7 +5,7 @@
   const DERIVED = ['Jours ouvrés', 'Jours non ouvrés', "Heures d'ouverture", 'Jours calendaires'];
   const COLORS = ['#00B4B7', '#5731AC', '#FDAE61', '#B2DF8A', '#FB9A99', '#6BAED6', '#990033', '#8f8d96'];
   const HILITE = '#FDAE61', EXCL = '#c9d2d9', INCOMPLETE = '#eef1f4', IGNORED = '#e4e8eb';
-  const SAVE = '#7BC622', OVER = '#DF5327', EXPECTED = '#c3ccd3';
+  const SAVE = '#7BC622', OVER = '#DF5327', EXPECTED_LINE = '#5731AC';
   // Seuils ASHRAE Guideline 14 (mensuel) ; pour jour/semaine on applique les seuils horaires, plus tolérants
   const THRESH = { mois: { cv: 0.15, nmbe: 0.05 }, semaine: { cv: 0.30, nmbe: 0.10 }, jour: { cv: 0.30, nmbe: 0.10 } };
   const DAY_NAMES = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
@@ -575,6 +575,7 @@
       canvas: 'chart-suivi', kind: 'suivi', label: 'Suivi', clickable: false, fill: 'rgba(123,198,34,0.14)', edge: '#6aae1c',
       changed: () => renderSuivi(false),
       hover: () => {},
+      zoom: { zoomed: () => !!state.suiviZoom, at: zoomSuiviAt, pan: panSuivi, view: suiviView, set: setSuiviZoom },
     },
   };
   Object.values(timelines).forEach(tl => { tl.range = () => getRange(tl.kind); tl.set = (a, b) => setRange(tl.kind, a, b); });
@@ -587,6 +588,7 @@
       const half = n > 1 ? Math.abs(x.getPixelForValue(1) - x.getPixelForValue(0)) / 2 : 20;
       const band = ([a, b], fill, edge, text, handles) => {
         const l = Math.max(area.left, x.getPixelForValue(a) - half), r = Math.min(area.right, x.getPixelForValue(b) + half);
+        if (r <= l) return; // zone hors de la partie affichée (graphique zoomé)
         c.fillStyle = fill; c.fillRect(l, area.top, r - l, area.bottom - area.top);
         c.fillStyle = edge;
         c.fillRect(l - 1, area.top, 2, area.bottom - area.top); c.fillRect(r - 1, area.top, 2, area.bottom - area.top);
@@ -662,13 +664,24 @@
     cv.addEventListener('mousedown', e => {
       if (!charts[key] || !state.ds) return;
       const g = geo(e);
-      drag = { mode: g.zone, x0: g.x, i0: g.idx, a0: g.a, b0: g.b, moved: false };
+      const ca = charts[key].chartArea;
+      drag = { mode: g.zone, x0: g.x, i0: g.idx, a0: g.a, b0: g.b, moved: false,
+               view0: tl.zoom ? tl.zoom.view() : null, areaW: ca.right - ca.left };
       e.preventDefault();
     });
+    if (tl.zoom) cv.addEventListener('wheel', e => {
+      if (!charts[key] || !state.ds) return;
+      const horiz = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+      if (!(e.ctrlKey || e.metaKey) && !(horiz && tl.zoom.zoomed())) return; // molette seule : défilement de la page
+      e.preventDefault();
+      const g = geo(e);
+      if (horiz) { const [lo, hi] = tl.zoom.view(); tl.zoom.pan(Math.sign(e.deltaX) * Math.max(1, Math.round((hi - lo + 1) * 0.1))); }
+      else tl.zoom.at(g.idx, e.deltaY < 0);
+    }, { passive: false });
     cv.addEventListener('mousemove', e => {
       if (!charts[key] || drag || !state.ds) return;
       const g = geo(e);
-      cv.style.cursor = g.zone === 'l' || g.zone === 'r' ? 'ew-resize' : g.zone === 'm' ? 'grab' : (tl.clickable ? 'pointer' : 'default');
+      cv.style.cursor = g.zone === 'l' || g.zone === 'r' ? 'ew-resize' : g.zone === 'm' ? 'grab' : (tl.clickable ? 'pointer' : tl.zoom && tl.zoom.zoomed() ? 'move' : 'default');
       tl.hover(state.ds.rows[g.idx].date);
     });
     cv.addEventListener('mouseleave', () => { if (!drag) tl.hover(null); });
@@ -676,7 +689,17 @@
       if (!drag || !charts[key]) return;
       const g = geo(e), n = state.ds.rows.length;
       if (Math.abs(g.x - drag.x0) > 4) drag.moved = true;
-      if (!drag.moved || drag.mode === 'n') return;
+      if (!drag.moved) return;
+      if (drag.mode === 'n') {
+        // Hors de la zone : déplacement de la vue quand le graphique est zoomé
+        if (tl.zoom && tl.zoom.zoomed() && drag.view0) {
+          const perBar = drag.areaW / (drag.view0[1] - drag.view0[0] + 1);
+          const shift = Math.round((drag.x0 - g.x) / perBar);
+          cv.style.cursor = 'grabbing';
+          tl.zoom.set([drag.view0[0] + shift, drag.view0[1] + shift]);
+        }
+        return;
+      }
       cv.style.cursor = drag.mode === 'm' ? 'grabbing' : 'ew-resize';
       const d = g.idx - drag.i0, minLen = key === 'suivi' ? 0 : 2;
       let na = drag.a0, nb = drag.b0;
@@ -1154,21 +1177,70 @@
 
   function renderModelsList() {
     const t = $('models-list');
-    if (!state.models.length) { t.innerHTML = "<tr><td class=\"muted\">Aucun IPE enregistré. Crée-en un dans l'onglet « Modèle &amp; SER ».</td></tr>"; return; }
+    if (!state.models.length) { t.innerHTML = "<p class=\"muted\">Aucun IPE enregistré. Crée-en un dans l'onglet « Modèle &amp; SER ».</p>"; return; }
     const list = [...state.models].sort((a, b) => sameSite(b) - sameSite(a));
-    t.innerHTML = '<tr><th>Nom</th><th>Site</th><th>Référence</th><th>R²</th><th></th></tr>' + list.map(m => `
-      <tr class="clickable ${m.id === state.activeModelId ? 'active-model' : ''} ${sameSite(m) ? '' : 'other-site'}" data-id="${m.id}" title="${esc(m.target)} = f(${esc(m.factors.join(', '))})">
-        <td>${esc(m.name)}</td><td>${esc(m.site)}</td><td>${periodLabel(m.refFrom, m.granularity)} → ${periodLabel(m.refTo, m.granularity)}</td>
-        <td>${fmt(m.stats.r2, 3)}</td><td><button class="link" data-del="${m.id}" title="Supprimer">✕</button></td></tr>`).join('');
-    t.querySelectorAll('tr.clickable').forEach(tr => tr.addEventListener('click', async e => {
+    // Liste compacte : nom sur une ligne (retour à la ligne si besoin), site · référence · R² en dessous
+    t.innerHTML = list.map(m => `
+      <div class="model-item ${m.id === state.activeModelId ? 'active-model' : ''} ${sameSite(m) ? '' : 'other-site'}" data-id="${m.id}" title="${esc(m.target)} = f(${esc(m.factors.join(', '))})">
+        <div class="model-main">
+          <div class="model-name">${esc(m.name)}</div>
+          <div class="model-meta">
+            <span>${esc(m.site)}</span>
+            <span>${periodLabel(m.refFrom, m.granularity)} → ${periodLabel(m.refTo, m.granularity)}</span>
+            <span>R² ${fmt(m.stats.r2, 3)}</span>
+          </div>
+        </div>
+        <button class="link" data-del="${m.id}" title="Supprimer cet IPE">✕</button>
+      </div>`).join('');
+    t.querySelectorAll('.model-item').forEach(tr => tr.addEventListener('click', async e => {
       const del = e.target.dataset.del;
       if (del) {
         if (!confirm('Supprimer cet IPE ?')) return;
         state.models = state.models.filter(m => m.id !== del);
         if (state.activeModelId === del) state.activeModelId = state.models[0]?.id || null;
-      } else { state.activeModelId = tr.dataset.id; $('suivi-from').value = ''; }
+      } else { state.activeModelId = tr.dataset.id; $('suivi-from').value = ''; state.suiviZoom = null; }
       await saveModels(); renderSuivi(true);
     }));
+  }
+
+  // ---------- Zoom du graphique de suivi (indices de périodes affichées, null = tout l'historique) ----------
+  function clampZoom(z) {
+    if (!z || !state.ds) return null;
+    const n = state.ds.rows.length, len = Math.min(z[1] - z[0], n - 1);
+    if (len >= n - 1) return null;
+    let lo = Math.round(z[0]);
+    lo = Math.max(0, Math.min(n - 1 - len, lo));
+    return [lo, lo + len];
+  }
+  function setSuiviZoom(z) {
+    state.suiviZoom = clampZoom(z);
+    const c = charts.suivi; if (!c) return;
+    c.options.scales.x.min = state.suiviZoom ? state.suiviZoom[0] : undefined;
+    c.options.scales.x.max = state.suiviZoom ? state.suiviZoom[1] : undefined;
+    c.update('none');
+  }
+  const suiviView = () => state.suiviZoom || [0, state.ds.rows.length - 1];
+  // Molette (avec Ctrl, ou pincement sur pavé tactile) : zoom centré sur le curseur
+  function zoomSuiviAt(idx, zoomIn) {
+    const [lo, hi] = suiviView(), len = hi - lo + 1, n = state.ds.rows.length;
+    let nl = Math.round(len * (zoomIn ? 0.8 : 1.25));
+    if (nl === len) nl += zoomIn ? -1 : 1;
+    nl = Math.max(Math.min(8, n), Math.min(n, nl));
+    const nlo = Math.round(idx - ((idx - lo) / len) * nl);
+    setSuiviZoom([nlo, nlo + nl - 1]);
+  }
+  function panSuivi(delta) {
+    const [lo, hi] = suiviView();
+    if (state.suiviZoom) setSuiviZoom([lo + delta, hi + delta]);
+  }
+  function zoomSuiviPreset(kind) {
+    if (!charts.suivi || !state.ds) return;
+    const [a, b] = getRange('suivi'), ref = charts.suivi.$fixed || [-1, -1];
+    if (kind === 'all') return setSuiviZoom(null);
+    let lo = a, hi = b;
+    if (kind === 'both' && ref[0] >= 0) { lo = Math.min(a, ref[0]); hi = Math.max(b, ref[1]); }
+    const pad = Math.max(1, Math.round((hi - lo + 1) * 0.05));
+    setSuiviZoom([lo - pad, hi + pad]);
   }
 
   function renderSuivi(full = true) {
@@ -1246,12 +1318,23 @@
       const opts = baseOptions({ y2: true, yTitle: u });
       opts.events = ['mousemove', 'mouseout'];
       opts.scales.y2.title = { display: true, text: `Écart cumulé réel − attendu (${u})` };
+      const z = clampZoom(state.suiviZoom);
+      state.suiviZoom = z;
+      opts.scales.x = { min: z ? z[0] : undefined, max: z ? z[1] : undefined, ticks: { autoSkip: true, maxRotation: 60 } };
+      // Légende : les barres « Réel » changent de couleur selon la période, on détaille donc les trois couleurs
+      opts.plugins.legend = { labels: { generateLabels: chart => {
+        const hidden = !chart.isDatasetVisible(0);
+        const real = [['Réel · référence', '#00B4B7'], ['Réel · suivi', SAVE], ['Réel · hors périodes', '#d3dadf']]
+          .map(([text, c]) => ({ text, fillStyle: c, strokeStyle: c, lineWidth: 0, pointStyle: 'rect', hidden, datasetIndex: 0 }));
+        const others = Chart.defaults.plugins.legend.labels.generateLabels(chart).filter(l => l.datasetIndex > 0);
+        return [...real, ...others];
+      } } };
       makeChart('suivi', $('chart-suivi'), {
         data: {
           labels: rows.map(r => periodLabel(r.date)),
           datasets: [
-            { type: 'bar', label: 'Réel', data: reel, order: 2, backgroundColor: ctx => barColor(ctx.dataIndex) },
-            { type: 'bar', label: 'Attendu (modèle)', data: att, backgroundColor: EXPECTED, order: 3 },
+            { type: 'bar', label: 'Réel', data: reel, order: 3, backgroundColor: ctx => barColor(ctx.dataIndex) },
+            { type: 'line', label: 'Attendu (modèle)', data: att, borderColor: EXPECTED_LINE, backgroundColor: EXPECTED_LINE, borderDash: [6, 4], borderWidth: 2, pointRadius: 2, pointStyle: 'circle', tension: 0, order: 2, spanGaps: false },
             { type: 'line', label: 'Écart cumulé (réel − attendu)', data: cumArr, borderColor: '#212b36', backgroundColor: '#212b36', yAxisID: 'y2', tension: 0.2, pointRadius: 1.5, order: 1, spanGaps: false },
           ],
         },
@@ -1401,6 +1484,7 @@
     $('btn-save').addEventListener('click', saveModel);
 
     $('btn-export-suivi').addEventListener('click', exportSuivi);
+    document.querySelectorAll('#suivi-zoom button').forEach(b => b.addEventListener('click', () => zoomSuiviPreset(b.dataset.zoom)));
     $('btn-export-models').addEventListener('click', () => download('ipe_modeles.json', JSON.stringify(state.models, null, 2), 'application/json'));
     $('file-models').addEventListener('change', async e => {
       const f = e.target.files[0]; if (!f) return;

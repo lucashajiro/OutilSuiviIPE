@@ -234,7 +234,7 @@
       <div class="grid2">
         <div class="card">
           <h2>IPE enregistrés</h2>
-          <table id="models-list"></table>
+          <div id="models-list" class="model-list"></div>
           <div class="row">
             <button id="btn-export-models" class="secondary">Exporter les IPE (JSON)</button>
             <label class="button secondary">Importer des IPE<input type="file" id="file-models" accept=".json" hidden></label>
@@ -256,8 +256,16 @@
       </div>
       <div class="card">
         <h2>Consommation réelle vs attendue</h2>
-        <p class="muted small">Tout l'historique. Barres turquoise = période de référence de l'IPE ; barres vertes = période de suivi (fais glisser la zone verte ou tire ses bords, avant ou après la référence). La courbe est l'écart cumulé réel − attendu sur la période de suivi.</p>
-        <div class="chart-box"><canvas id="chart-suivi"></canvas></div>
+        <p class="muted small">Barres = consommation réelle : turquoise sur la période de référence de l'IPE, vert sur la période de suivi (fais glisser la zone verte ou tire ses bords), gris ailleurs. Ligne violette pointillée = consommation attendue par le modèle. Courbe noire = écart cumulé réel − attendu sur la période de suivi (axe de droite).</p>
+        <div class="row zoom-bar">
+          <span class="muted small">Zoom : <b>Ctrl + molette</b> sur le graphique, puis glisser hors de la zone verte pour se déplacer.</span>
+          <div id="suivi-zoom" class="picks">
+            <button data-zoom="suivi">Période de suivi</button>
+            <button data-zoom="both">Référence + suivi</button>
+            <button data-zoom="all">Tout l'historique</button>
+          </div>
+        </div>
+        <div class="chart-box tall"><canvas id="chart-suivi"></canvas></div>
       </div>
       <div class="card">
         <h2>Écart par période</h2>

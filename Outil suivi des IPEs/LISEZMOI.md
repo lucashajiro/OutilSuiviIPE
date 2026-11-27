@@ -1,4 +1,4 @@
-# IPE Builder – extension Chrome (prototype v0.10.1)
+# IPE Builder – extension Chrome (prototype v0.11)
 
 ## Installer l'extension dans Chrome (2 minutes)
 
@@ -105,3 +105,11 @@ Les IPE sont enregistrés dans le stockage local de Chrome et restent disponible
 ## Correctif v0.10.1
 
 - Bouton « Mettre à jour » : le choix du dossier échouait au premier clic (« Must be handling a user gesture »). Corrigé : les consignes s'affichent maintenant sous le bouton. Depuis la v0.10.0, cette mise à jour est à faire une fois à la main.
+
+## Nouveautés v0.11
+
+- Suivi, IPE enregistrés : liste compacte à la place du tableau (nom en gras sur toute la largeur, puis site, référence et R² en dessous). La carte ne déborde plus.
+- Suivi, graphique « Consommation réelle vs attendue » :
+  - zoom avec **Ctrl + molette** (ou pincement sur pavé tactile), centré sur le curseur ; déplacement en glissant hors de la zone verte, ou par défilement horizontal ;
+  - raccourcis « Période de suivi », « Référence + suivi », « Tout l'historique » ;
+  - l'attendu est une ligne violette pointillée (et non plus des barres grises, faciles à confondre avec les barres hors période) ; la légende détaille les couleurs des barres réelles (référence, suivi, hors périodes).

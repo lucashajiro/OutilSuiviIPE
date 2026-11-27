@@ -161,3 +161,19 @@ td.tbad { color: var(--orange); background: rgba(223, 83, 39, 0.08); }
 .update-status { color: #919eab; font-size: 11px; margin: 6px 0 0 4px; max-width: 190px; }
 .update-status.ok { color: #5a9a17; } .update-status.err { color: var(--orange); }
 @media (max-width: 1150px) { #btn-update span, .update-status { display: none; } }
+
+/* Suivi : liste des IPE enregistrés */
+.model-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.model-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.model-item:hover { background: var(--primary-tint); }
+.model-item.active-model { background: var(--primary-tint); border-color: var(--primary); box-shadow: inset 3px 0 0 var(--primary); }
+.model-main { flex: 1; min-width: 0; }
+.model-name { font-weight: 600; overflow-wrap: anywhere; }
+.model-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.model-item.other-site .model-name, .model-item.other-site .model-meta { color: #9aa7b1; }
+.model-item .link { flex: none; }
+
+/* Suivi : zoom du graphique réel vs attendu */
+.zoom-bar { justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.zoom-bar .picks { margin-top: 0; }
+.chart-box.tall { height: 400px; }
