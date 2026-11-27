@@ -1219,7 +1219,8 @@
     c.options.scales.x.max = state.suiviZoom ? state.suiviZoom[1] : undefined;
     c.update('none');
   }
-  const suiviView = () => state.suiviZoom || [0, state.ds.rows.length - 1];
+  // Déclaration de fonction (et non const) : référencée par `timelines`, construit au chargement du script
+  function suiviView() { return state.suiviZoom || [0, state.ds.rows.length - 1]; }
   // Molette (avec Ctrl, ou pincement sur pavé tactile) : zoom centré sur le curseur
   function zoomSuiviAt(idx, zoomIn) {
     const [lo, hi] = suiviView(), len = hi - lo + 1, n = state.ds.rows.length;

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "IPE Builder – Smart Impulse",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Construction et suivi d'Indicateurs de Performance Énergétique (régression, SER, suivi réel vs attendu).",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["https://api.github.com/*", "https://raw.githubusercontent.com/*"],

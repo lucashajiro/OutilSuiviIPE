@@ -2,7 +2,7 @@
 
 Extension Chrome pour **construire et suivre des Indicateurs de Performance Énergétique (IPE)** à partir des données du dashboard Smart Impulse ou d'un fichier CSV : corrélations, modèle de régression (situation énergétique de référence, SER), puis suivi réel vs attendu et calcul des économies.
 
-Version actuelle : **0.11.0** (prototype). Tout fonctionne hors ligne, dans le navigateur, et aucune donnée n'est envoyée à un serveur. Seul le bouton de mise à jour contacte GitHub, pour télécharger le code.
+Version actuelle : **0.11.1** (prototype). Tout fonctionne hors ligne, dans le navigateur, et aucune donnée n'est envoyée à un serveur. Seul le bouton de mise à jour contacte GitHub, pour télécharger le code.
 
 ## Installation
 
@@ -16,7 +16,7 @@ Version actuelle : **0.11.0** (prototype). Tout fonctionne hors ligne, dans le n
 À partir de la v0.10, le bouton **Mettre à jour** (sous le menu latéral) installe la dernière version publiée sur la branche `main` de ce dépôt, sans recharger l'extension à la main. Une pastille orange signale qu'une nouvelle version est disponible.
 
 1. Au premier clic, sélectionner le dossier `Outil suivi des IPEs` et autoriser Chrome à le modifier. Ce choix est mémorisé, mais Chrome peut redemander l'autorisation d'une session à l'autre.
-2. Le bouton compare chaque fichier local à GitHub, télécharge et vérifie les fichiers modifiés, puis demande confirmation avant d'écrire.
+2. Le bouton compare chaque fichier local à GitHub, télécharge et vérifie les fichiers modifiés, puis demande confirmation avant d'écrire. Si la version locale est plus récente que GitHub, ou a le même numéro avec des fichiers différents, un avertissement signale que des modifications non publiées seront perdues.
 3. L'extension se recharge et l'application se rouvre. Les IPE enregistrés sont conservés.
 
 Le dépôt doit être **public**, car le bouton télécharge les fichiers sans authentification. Les fichiers supprimés du dépôt ne sont pas supprimés localement, ce qui ne pose pas de problème. Pour publier une version, pousser sur `main` en augmentant `version` dans `manifest.json` : c'est ce numéro qui allume la pastille.
@@ -26,6 +26,14 @@ Pour passer de la v0.9 (sans bouton) à la v0.10, il faut faire la mise à jour 
 ### Pendant le développement
 
 Après une modification du code, cliquer sur la flèche circulaire de l'extension dans `chrome://extensions` pour la recharger. Le numéro de version affiché sous le menu latéral permet de vérifier que la bonne version est chargée.
+
+Avant de publier, vérifier que les scripts se chargent sans erreur (Node.js requis) :
+
+```
+node tools/smoke-test.js "Outil suivi des IPEs"
+```
+
+Ne pas cliquer sur **Mettre à jour** dans un clone qui contient des modifications non poussées : le bouton remet le dossier à l'identique de GitHub (un avertissement le rappelle).
 
 > **Attention :** les IPE sont enregistrés dans le stockage local de Chrome, rattaché à l'extension. Ils sont perdus si l'extension est supprimée ou si son dossier est déplacé ou renommé. Exporter régulièrement les IPE en JSON (onglet **Suivi**).
 

@@ -1,4 +1,4 @@
-# IPE Builder – extension Chrome (prototype v0.11)
+# IPE Builder – extension Chrome (prototype v0.11.1)
 
 ## Installer l'extension dans Chrome (2 minutes)
 
@@ -113,3 +113,8 @@ Les IPE sont enregistrés dans le stockage local de Chrome et restent disponible
   - zoom avec **Ctrl + molette** (ou pincement sur pavé tactile), centré sur le curseur ; déplacement en glissant hors de la zone verte, ou par défilement horizontal ;
   - raccourcis « Période de suivi », « Référence + suivi », « Tout l'historique » ;
   - l'attendu est une ligne violette pointillée (et non plus des barres grises, faciles à confondre avec les barres hors période) ; la légende détaille les couleurs des barres réelles (référence, suivi, hors périodes).
+
+## Correctif v0.11.1
+
+- L'application ne démarrait plus en v0.11.0 (erreur au chargement de `js/app.js`), ce qui empêchait notamment l'import automatique depuis le dashboard. Corrigé.
+- Bouton « Mettre à jour » : avertissement avant d'écraser des fichiers locaux quand la version installée est plus récente que GitHub (avec une seconde confirmation) ou a le même numéro avec des fichiers différents. Cas typique : un clone git avec des modifications pas encore poussées.

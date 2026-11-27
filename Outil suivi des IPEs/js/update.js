@@ -155,9 +155,23 @@
       const newVersion = mf ? JSON.parse(new TextDecoder().decode(mf.bytes)).version : localVersion();
 
       const list = changed.map(f => '• ' + f.path).slice(0, 15).join('\n') + (changed.length > 15 ? '\n…' : '');
-      if (!confirm(`Version installée : ${localVersion()}\nVersion GitHub : ${newVersion}\n\n` +
-                   `${changed.length} fichier(s) à mettre à jour :\n${list}\n\n` +
+      // Garde-fou : la synchronisation écrase tout fichier local différent de GitHub, y compris des
+      // modifications pas encore publiées (ex. dans un clone git où l'on développe).
+      const cmp = cmpVersion(localVersion(), newVersion);
+      const warning = cmp > 0
+        ? `⚠ ATTENTION : la version installée (${localVersion()}) est PLUS RÉCENTE que celle de GitHub (${newVersion}).\n` +
+          'Si ce dossier contient des modifications pas encore publiées sur GitHub, elles seront DÉFINITIVEMENT PERDUES.\n\n'
+        : cmp === 0
+          ? `⚠ Même numéro de version (${newVersion}) mais des fichiers diffèrent de GitHub.\n` +
+            "S'il s'agit de modifications locales pas encore publiées, elles seront perdues.\n\n"
+          : '';
+      if (!confirm(warning + `Version installée : ${localVersion()}\nVersion GitHub : ${newVersion}\n\n` +
+                   `${changed.length} fichier(s) à remplacer par la version GitHub :\n${list}\n\n` +
                    "L'extension se rechargera ensuite (les IPE enregistrés sont conservés). Continuer ?")) {
+        setStatus('Mise à jour annulée'); return;
+      }
+      // Version locale plus récente : seconde confirmation, la perte de travail étant irréversible
+      if (cmp > 0 && !confirm(`Confirmer le retour à la version ${newVersion} de GitHub ? Les fichiers locaux listés seront écrasés.`)) {
         setStatus('Mise à jour annulée'); return;
       }
 
