@@ -1,14 +1,16 @@
-# IPE Builder – extension Chrome (prototype v0.9)
+# IPE Builder – extension Chrome (prototype v0.10)
 
 ## Installer l'extension dans Chrome (2 minutes)
 
 1. Ouvre Chrome et tape `chrome://extensions` dans la barre d'adresse.
 2. En haut à droite, active **Mode développeur**.
-3. Clique sur **Charger l'extension non empaquetée** et sélectionne le dossier `ipe-extension` (celui qui contient `manifest.json`).
+3. Clique sur **Charger l'extension non empaquetée** et sélectionne le dossier `Outil suivi des IPEs` (celui qui contient `manifest.json`).
 4. Épingle l'extension (icône puzzle en haut à droite de Chrome, puis la punaise à côté de « IPE Builder »).
 5. Clique sur l'icône : l'application s'ouvre dans un nouvel onglet.
 
 Après une modification des fichiers, retourne sur `chrome://extensions` et clique sur la flèche circulaire de l'extension pour la recharger.
+
+Pour installer une nouvelle version publiée sur GitHub, clique sur le bouton **Mettre à jour** sous le menu latéral (à partir de la v0.10, voir « Nouveautés v0.10 »).
 
 ## Récupérer les données du dashboard Smart Impulse
 
@@ -49,6 +51,8 @@ Sélecteur « Unité » en haut : kWh, kWh/m², €, €/m², kgCO₂e, kgCO₂e
 - `lib/holidays.js` : bibliothèque de jours fériés date-holidays (licence ISC, données CC-BY-SA 4.0, voir `lib/holidays-LICENSE.txt`)
 
 Les IPE et les dernières données chargées sont conservés localement dans Chrome.
+
+- `js/update.js` : bouton « Mettre à jour » (téléchargement depuis GitHub et écriture dans le dossier de l'extension)
 
 - `js/extract.js` : lecture des données du graphique du dashboard (injectée dans la page au clic)
 
@@ -93,3 +97,7 @@ Les IPE sont enregistrés dans le stockage local de Chrome et restent disponible
 
 - Corrélations : choix de la forme de la régression à une variable (linéaire, seuil max(0, X − s) avec recherche du seuil, quadratique), tracée sur le nuage de points. Le filtre k × RMSE utilise la forme choisie. « Utiliser dans Modèle & SER » crée le facteur non linéaire correspondant (avec le seuil trouvé).
 - Numéro de version affiché sous le menu latéral, pour vérifier que la mise à jour est bien chargée.
+
+## Nouveautés v0.10
+
+- Bouton « Mettre à jour » sous le menu latéral : installe la dernière version publiée sur GitHub (branche `main`) sans recharger l'extension à la main. Au premier clic, sélectionner le dossier de l'extension et autoriser Chrome à le modifier (choix mémorisé). Seuls les fichiers modifiés sont téléchargés et vérifiés, puis écrits après confirmation. L'extension se recharge ensuite et les IPE enregistrés sont conservés. Une pastille orange signale qu'une nouvelle version est disponible.

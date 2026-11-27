@@ -6,6 +6,15 @@ importScripts('js/extract.js');
 
 const DASHBOARD = /^https:\/\/dashboard\.smart-impulse\.com\//;
 
+// Après une mise à jour lancée depuis l'application (js/update.js), l'extension se recharge
+// et ferme ses onglets : on rouvre l'application.
+chrome.runtime.onInstalled.addListener(async () => {
+  const { reopenAfterUpdate } = await chrome.storage.local.get('reopenAfterUpdate');
+  if (!reopenAfterUpdate) return;
+  await chrome.storage.local.remove('reopenAfterUpdate');
+  chrome.tabs.create({ url: chrome.runtime.getURL('app.html') });
+});
+
 chrome.action.onClicked.addListener(async tab => {
   if (tab && tab.url && DASHBOARD.test(tab.url)) {
     let pending;

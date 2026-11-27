@@ -153,3 +153,11 @@ td.tbad { color: var(--orange); background: rgba(223, 83, 39, 0.08); }
 #model-coefs th { white-space: normal; vertical-align: bottom; }
 #model-coefs td:first-child { white-space: normal; }
 .app-version { color: #919eab; font-size: 11px; margin: 24px 0 0 14px; }
+.update-box { margin: 10px 0 0 10px; }
+#btn-update { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 12px; position: relative; }
+#btn-update svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; }
+#btn-update.has-update { color: var(--primary); border-color: var(--primary); }
+#btn-update.has-update::after { content: ""; position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+.update-status { color: #919eab; font-size: 11px; margin: 6px 0 0 4px; max-width: 190px; }
+.update-status.ok { color: #5a9a17; } .update-status.err { color: var(--orange); }
+@media (max-width: 1150px) { #btn-update span, .update-status { display: none; } }
