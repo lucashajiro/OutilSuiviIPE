@@ -1,4 +1,4 @@
-# IPE Builder – extension Chrome (prototype v0.10)
+# IPE Builder – extension Chrome (prototype v0.10.1)
 
 ## Installer l'extension dans Chrome (2 minutes)
 
@@ -101,3 +101,7 @@ Les IPE sont enregistrés dans le stockage local de Chrome et restent disponible
 ## Nouveautés v0.10
 
 - Bouton « Mettre à jour » sous le menu latéral : installe la dernière version publiée sur GitHub (branche `main`) sans recharger l'extension à la main. Au premier clic, sélectionner le dossier de l'extension et autoriser Chrome à le modifier (choix mémorisé). Seuls les fichiers modifiés sont téléchargés et vérifiés, puis écrits après confirmation. L'extension se recharge ensuite et les IPE enregistrés sont conservés. Une pastille orange signale qu'une nouvelle version est disponible.
+
+## Correctif v0.10.1
+
+- Bouton « Mettre à jour » : le choix du dossier échouait au premier clic (« Must be handling a user gesture »). Corrigé : les consignes s'affichent maintenant sous le bouton. Depuis la v0.10.0, cette mise à jour est à faire une fois à la main.

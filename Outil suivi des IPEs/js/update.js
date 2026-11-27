@@ -106,8 +106,8 @@
         (await dir.requestPermission({ mode: 'readwrite' })) !== 'granted') dir = null;
     if (dir && !(await isExtensionDir(dir))) dir = null;
     if (!dir) {
-      alert("Sélectionne le dossier de l'extension (« " + DIR + " », celui qui contient manifest.json).\n\n" +
-            "Chrome demandera ensuite l'autorisation de modifier ce dossier. Ce choix est mémorisé.");
+      // Pas d'alert() ici : la boîte de dialogue consomme le clic et Chrome refuse ensuite le sélecteur
+      setStatus(`Sélectionne le dossier « ${DIR} » (celui qui contient manifest.json), puis autorise la modification. Ce choix est mémorisé.`);
       dir = await window.showDirectoryPicker({ id: 'ipe-extension', mode: 'readwrite' });
       if (!(await isExtensionDir(dir))) throw new Error("ce dossier n'est pas celui de l'extension (manifest.json absent ou différent)");
       await saveHandle(dir);
@@ -170,6 +170,7 @@
       setTimeout(() => chrome.runtime.reload(), 800);
     } catch (e) {
       if (e && e.name === 'AbortError') setStatus('Mise à jour annulée');
+      else if (e && (e.name === 'SecurityError' || e.name === 'NotAllowedError')) setStatus('Chrome a bloqué le choix du dossier : clique à nouveau sur « Mettre à jour ».', 'err');
       else setStatus('Échec : ' + (e && e.message ? e.message : e), 'err');
     } finally {
       busy = false; $('btn-update').disabled = false;

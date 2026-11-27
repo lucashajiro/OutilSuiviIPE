@@ -2,7 +2,7 @@
 
 Extension Chrome pour **construire et suivre des Indicateurs de Performance Énergétique (IPE)** à partir des données du dashboard Smart Impulse ou d'un fichier CSV : corrélations, modèle de régression (situation énergétique de référence, SER), puis suivi réel vs attendu et calcul des économies.
 
-Version actuelle : **0.10.0** (prototype). Tout fonctionne hors ligne, dans le navigateur, et aucune donnée n'est envoyée à un serveur. Seul le bouton de mise à jour contacte GitHub, pour télécharger le code.
+Version actuelle : **0.10.1** (prototype). Tout fonctionne hors ligne, dans le navigateur, et aucune donnée n'est envoyée à un serveur. Seul le bouton de mise à jour contacte GitHub, pour télécharger le code.
 
 ## Installation
 
